@@ -1,9 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, StdResult, WasmMsg};
+use cosmwasm_std::{
+    to_binary, Addr, Binary, Coin, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult,
+    WasmMsg, WasmQuery,
+};
 
-use crate::msg::ExecuteMsg;
+use crate::msg::{ExecuteMsg, QueryMsg};
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
@@ -23,5 +26,21 @@ impl CwTemplateContract {
             funds,
         }
         .into())
+    }
+
+    /// Get Community Addresses
+    pub fn query_community_info<Q, T, CQ>(&self, querier: &Q, msg: QueryMsg) -> StdResult<Binary>
+    where
+        Q: Querier,
+        T: Into<String>,
+        CQ: CustomQuery,
+    {
+        let query = WasmQuery::Smart {
+            contract_addr: self.addr().into(),
+            msg: to_binary(&msg)?,
+        }
+        .into();
+        let res = QuerierWrapper::<CQ>::new(querier).query(&query)?;
+        Ok(res)
     }
 }

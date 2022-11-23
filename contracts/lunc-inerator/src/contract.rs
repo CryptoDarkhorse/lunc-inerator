@@ -27,7 +27,7 @@ pub fn instantiate(
     created and also which kind of token would you like to mint based on
     the code id of the contract deployed */
     let state = Config {
-        stable_denom: "uluna".to_string(),
+        stable_denom: msg.stable_denom.to_string(),
         burn_address: "terra1sk06e3dyexuq4shw77y3dsv480xv42mq73anxu".to_string(),
         community_owner: msg.community_owner.to_string(),
         community_dev: msg.community_dev.to_string(),
@@ -38,6 +38,7 @@ pub fn instantiate(
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
+        .add_attribute("denom", msg.stable_denom)
         .add_attribute("community_owner", msg.community_owner)
         .add_attribute("community_dev", msg.community_dev))
 }
@@ -178,8 +179,13 @@ pub fn burn(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    to_binary("")
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    let config = CONFIG.load(deps.storage)?;
+
+    match msg {
+        QueryMsg::CommunityOwner {} => to_binary(&config.community_owner),
+        QueryMsg::CommunityDeveloper {} => to_binary(&config.community_dev),
+    }
 }
 
 /* In case you want to upgrade this contract you can find information about
