@@ -14,9 +14,12 @@ mod tests {
         Box::new(contract)
     }
 
+    const OWNER: &str = "OWNER";
+    const DEVEL: &str = "DEVEL";
+
     const USER: &str = "USER";
     const ADMIN: &str = "ADMIN";
-    const NATIVE_DENOM: &str = "denom";
+    const NATIVE_DENOM: &str = "uluna";
 
     fn mock_app() -> App {
         AppBuilder::new().build(|router, _, storage| {
@@ -38,7 +41,11 @@ mod tests {
         let mut app = mock_app();
         let cw_template_id = app.store_code(contract_template());
 
-        let msg = InstantiateMsg { count: 1i32 };
+        let msg = InstantiateMsg {
+            stable_denom: "uluna".to_string(),
+            community_owner: OWNER.to_string(),
+            community_dev: DEVEL.to_string(),
+        };
         let cw_template_contract_addr = app
             .instantiate_contract(
                 cw_template_id,
@@ -55,16 +62,21 @@ mod tests {
         (app, cw_template_contract)
     }
 
-    mod count {
+    mod deposit {
         use super::*;
         use crate::msg::ExecuteMsg;
 
         #[test]
-        fn count() {
+        fn valid_deposit() {
             let (mut app, cw_template_contract) = proper_instantiate();
 
-            let msg = ExecuteMsg::Increment {};
-            let cosmos_msg = cw_template_contract.call(msg).unwrap();
+            let msg = ExecuteMsg::Deposit {};
+            let funds = vec![Coin {
+                denom: NATIVE_DENOM.to_string(),
+                amount: Uint128::new(1),
+            }];
+
+            let cosmos_msg = cw_template_contract.call(msg, funds).unwrap();
             app.execute(Addr::unchecked(USER), cosmos_msg).unwrap();
         }
     }
